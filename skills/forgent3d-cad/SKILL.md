@@ -17,9 +17,12 @@ cad-build rebuild [file.py]                # build-check + dimension report (bbo
                                            #   hole census, diagnostics) — run after every edit
 cad-build run-python [file.py] --code '…'  # measure geometry that isn't in the report; the snippet
                                            #   runs in the model's namespace after it builds; print() it
+cad-build snapshot [file.py] [--out p.png] # render a 2x2 orthographic preview PNG (front/right/top/iso)
+                                           #   → prints the path; open it to SEE the model you built
 cad-build recipe <assembly|selectors|outline>   # load a focused recipe before touching that area
 cad-build preview [file.py]                # → a hosted link; opening it (after login) imports the
-                                           #   model into your Forgent3D account as a normal, editable model
+                                           #   model into your account. Re-previewing this project UPDATES
+                                           #   that same model in place (no duplicates)
 cad-build feedback --message '…' [file.py] # report an engine/tool bug (same channel as the product's
                                            #   feedback widget); pass the source file so it reproduces
 ```
@@ -30,6 +33,11 @@ named `model.py`). Whatever the name, `cad-build` builds it as the model, and
 `preview` imports it into the product as that model's `model.py`. Large
 `run-python` snippets can come from stdin with `--code-stdin`. Nothing
 `run-python` does is saved — real changes go in the source file.
+
+`preview` writes a `.forgent3d-preview.json` in the project dir holding a stable
+key that ties this project to one cloud model, so re-previewing after edits
+updates that model instead of spawning a new one. Keep the file (don't delete it
+between previews); it carries no secrets and is safe to commit or gitignore.
 
 ---
 
@@ -71,6 +79,8 @@ Before touching a matching area, load a recipe with `cad-build recipe <name>`: "
 ## Workflow
 
 Open with one concrete sentence stating your approach — no generic acknowledgements — then edit and call `cad-build rebuild`. Fix the first actionable error and rebuild until clean, and read the returned bboxes and hole census to confirm sizes and placement match the request.
+
+Numbers confirm dimensions, but they don't catch a shape that's wrong in a way the bbox can't see — a bore on the wrong face, a feature mirrored, a fillet that didn't take. When the request is non-trivial, or you're unsure it looks right, run `cad-build snapshot` and open the PNG: the four orthographic views (front/right/top/iso) let you SEE what you built and compare it against what was asked. It reads from the same build as `rebuild`, so run it once the build is clean.
 
 When a value genuinely can't be derived from the source or the build summary (a boolean seam, a tangency), `cad-build run-python --code '…'` runs a snippet in model.py's namespace after it builds — print() the measurement instead of guessing. Each call costs a round-trip: batch every open question into one snippet, and skip it when `cad-build rebuild`'s summary already answers. Snippets are ephemeral; real changes land in model.py.
 
