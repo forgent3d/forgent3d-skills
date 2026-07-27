@@ -18,9 +18,11 @@ agent can install directly:
 ```
 # the whole collection
 npx skills add forgent3d/forgent3d-skills
+```
 
-# just the CAD skill
-npx skills add https://github.com/forgent3d/forgent3d-skills/tree/main/skills/forgent3d-cad
+## Update
+```
+npx skills update forgent3d/forgent3d-cad
 ```
 
 Or point any agent at `skills/forgent3d-cad/SKILL.md` and run its tools with

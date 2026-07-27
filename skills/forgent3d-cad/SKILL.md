@@ -13,17 +13,23 @@ when `FORGENT3D_CAD_BUILD_BIN` points at one). You edit `model.py` with your own
 file tools; `cad-build` is how you build, measure, read recipes, and preview.
 
 ```
-cad-build rebuild [model.py]               # build-check + dimension report (bbox, per-body bboxes,
+cad-build rebuild [file.py]                # build-check + dimension report (bbox, per-body bboxes,
                                            #   hole census, diagnostics) — run after every edit
-cad-build run-python [model.py] --code '…' # measure geometry that isn't in the report; the snippet
-                                           #   runs in model.py's namespace after it builds; print() it
+cad-build run-python [file.py] --code '…'  # measure geometry that isn't in the report; the snippet
+                                           #   runs in the model's namespace after it builds; print() it
 cad-build recipe <assembly|selectors|outline>   # load a focused recipe before touching that area
-cad-build preview [model.py]               # → a hosted link; opening it (after login) imports the
+cad-build preview [file.py]                # → a hosted link; opening it (after login) imports the
                                            #   model into your Forgent3D account as a normal, editable model
+cad-build feedback --message '…' [file.py] # report an engine/tool bug (same channel as the product's
+                                           #   feedback widget); pass the source file so it reproduces
 ```
 
-`model.py` defaults to `./model.py`. Large `run-python` snippets can come from stdin
-with `--code-stdin`. Nothing `run-python` does is saved — real changes go in `model.py`.
+The source file may be named anything — `bracket.py`, `part.py`, whatever fits.
+Pass its path (or omit it when the directory holds exactly one `.py`, or it's
+named `model.py`). Whatever the name, `cad-build` builds it as the model, and
+`preview` imports it into the product as that model's `model.py`. Large
+`run-python` snippets can come from stdin with `--code-stdin`. Nothing
+`run-python` does is saved — real changes go in the source file.
 
 ---
 
@@ -67,4 +73,10 @@ Before touching a matching area, load a recipe with `cad-build recipe <name>`: "
 Open with one concrete sentence stating your approach — no generic acknowledgements — then edit and call `cad-build rebuild`. Fix the first actionable error and rebuild until clean, and read the returned bboxes and hole census to confirm sizes and placement match the request.
 
 When a value genuinely can't be derived from the source or the build summary (a boolean seam, a tangency), `cad-build run-python --code '…'` runs a snippet in model.py's namespace after it builds — print() the measurement instead of guessing. Each call costs a round-trip: batch every open question into one snippet, and skip it when `cad-build rebuild`'s summary already answers. Snippets are ephemeral; real changes land in model.py.
+
+## Reporting engine/tool bugs
+
+When you hit a fault in the **tool or engine itself** — `cad-build` crashes or errors internally, a valid dialect/cadkit construct that the docs say should work doesn't, the build summary reports geometry that contradicts correct source, or `rebuild` and `preview` disagree — file it once with `cad-build feedback --message '…' <the source file>`. This reaches the Forgent3D team through the same channel as the product's in-app feedback; passing the source file lets them reproduce it. Keep the message specific: what you did, what you expected, what happened. It's fire-and-forget — send it, then continue or work around the issue; don't block the user's task on it.
+
+This is only for genuine tool/engine faults. A build error caused by your own model (an illegal fillet, a bad selector, a misplaced cutter) is yours to fix, not feedback — fix the source and rebuild. When in doubt, if changing the source can make it right, it's not a tool bug.
 
