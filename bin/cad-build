@@ -1,0 +1,26 @@
+#!/usr/bin/env node
+// forgent3d-cad skill → @forgent3d/cad-build launcher.
+//
+// Resolution order:
+//   1. $FORGENT3D_CAD_BUILD_BIN            explicit path to a local cad-build bin
+//      (e.g. <monorepo>/packages/cad-build-cli/bin/cad-build.mjs) — use this
+//      until the npm package is published.
+//   2. npx -y @forgent3d/cad-build@latest  the published package.
+import { spawn } from "node:child_process";
+
+const argv = process.argv.slice(2);
+const local = process.env.FORGENT3D_CAD_BUILD_BIN;
+
+const [cmd, args] = local
+  ? [process.execPath, [local, ...argv]]
+  : ["npx", ["-y", "@forgent3d/cad-build@latest", ...argv]];
+
+const child = spawn(cmd, args, { stdio: "inherit", env: process.env });
+child.on("exit", (code, signal) => {
+  if (signal) process.kill(process.pid, signal);
+  else process.exit(code ?? 0);
+});
+child.on("error", (err) => {
+  process.stderr.write(`cad-build launcher failed: ${err.message}\n`);
+  process.exit(1);
+});
