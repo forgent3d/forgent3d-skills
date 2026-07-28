@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// forgent3d-cad skill → @forgent3d/cad-build launcher.
+// forgent3d skill → @forgent3d/cad-build launcher.
 //
 // Resolution order:
 //   1. $FORGENT3D_CAD_BUILD_BIN            explicit path to a local cad-build bin

@@ -1,5 +1,5 @@
 ---
-name: forgent3d-cad
+name: forgent3d
 description: Author or modify a Forgent3D CAD model by editing a build123d-dialect model.py, then build-check and measure it with the bundled wasm engine (cad-build rebuild / run-python) and hand off a hosted 3D preview link (cad-build preview). Use whenever the task is creating or changing a parametric 3D CAD part/assembly for Forgent3D, or when a model.py in the build123d dialect + cadkit is present.
 ---
 

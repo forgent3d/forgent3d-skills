@@ -1,4 +1,4 @@
-# forgent3d-cad — coding-agent skill
+# forgent3d — coding-agent skill
 
 Lets a coding agent (Claude Code / Codex / …) author and modify a **Forgent3D**
 CAD model: edit a build123d-dialect `model.py`, then build-check / measure it with
