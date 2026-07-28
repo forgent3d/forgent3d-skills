@@ -4,9 +4,11 @@ Lets a coding agent (Claude Code / Codex / …) author and modify a **Forgent3D*
 CAD model: edit a build123d-dialect `model.py`, then build-check / measure it with
 the bundled wasm engine and hand off a hosted 3D preview link.
 
-- **SKILL.md** — the instructions the agent follows (generated from Forgent3D's
-  production CAD-agent prompt, so it never drifts). Tool-call idioms are rewritten
-  to the `cad-build` CLI.
+- **SKILL.md** — the instructions the agent follows. Maintained here; edit it
+  directly.
+- **references/** — deeper rules the agent reads on demand: `selectors.md`
+  (persistent geometry queries), `assembly.md` (mates, joints, the managed
+  block), `outline.md` (`#@` annotations).
 - **bin/cad-build** — launcher for [`@forgent3d/cad-build`](https://www.npmjs.com/package/@forgent3d/cad-build):
   runs the published package via `npx`, or a **local build** when
   `FORGENT3D_CAD_BUILD_BIN` points at one.
@@ -14,10 +16,11 @@ the bundled wasm engine and hand off a hosted 3D preview link.
 ## Commands
 
 ```
-cad-build rebuild [model.py]                    # build-check + dimension report
-cad-build run-python [model.py] --code '…'      # measure geometry after the build
-cad-build recipe <assembly|selectors|outline>   # focused CAD recipe
-cad-build preview [model.py]                     # → hosted 3D viewer link
+cad-build rebuild    [file.py]                 # build-check + dimension report
+cad-build run-python [file.py] --code '…'      # measure geometry after the build
+cad-build snapshot   [file.py] [--out p.png]   # render a 2x2 orthographic PNG
+cad-build preview    [file.py]                 # → hosted 3D viewer link
+cad-build feedback --message '…' [file.py]     # report an engine/tool bug
 ```
 
 ## Local (unpublished) use

@@ -45,11 +45,23 @@ if (local) {
 }
 
 const child = spawn(cmd, args, opts);
-child.on("exit", (code, signal) => {
-  if (signal) process.kill(process.pid, signal);
-  else process.exit(code ?? 0);
+// Exit by SETTING the code, not by calling process.exit() from inside the
+// child's exit callback. On Windows the child reaper delivers that callback
+// through libuv's async handle, so exiting in place tears the loop down while
+// the handle is still closing:
+//   Assertion failed: !(handle->flags & UV_HANDLE_CLOSING), src\win\async.c:76
+// — a crash on a run that already succeeded. "close" also guarantees the
+// child's stdio is fully flushed first; a hard exit only backstops from an
+// unref'd timer, i.e. once the loop is quiet and nothing is mid-close.
+child.on("close", (code, signal) => {
+  if (signal) {
+    process.kill(process.pid, signal);
+    return;
+  }
+  process.exitCode = code ?? 0;
+  setTimeout(() => process.exit(code ?? 0), 2000).unref();
 });
 child.on("error", (err) => {
   process.stderr.write(`cad-build launcher failed: ${err.message}\n`);
-  process.exit(1);
+  process.exitCode = 1;
 });
