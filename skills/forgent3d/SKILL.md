@@ -1,6 +1,6 @@
 ---
 name: forgent3d
-description: Author or modify a Forgent3D CAD model by editing a build123d-dialect model.py, then build-check and measure it with the bundled wasm engine (cad-build rebuild / run-python) and hand off a hosted 3D preview link (cad-build preview). Use whenever the task is creating or changing a parametric 3D CAD part/assembly for Forgent3D, or when a model.py in the build123d dialect + cadkit is present.
+description: Author or modify a Forgent3D CAD model by editing a build123d-dialect model.py, then build-check and measure it with the bundled wasm engine (cad-build rebuild / run-python), export it (cad-build export → STEP/STL/GLB) and hand off a shareable 3D link (cad-build preview). Use whenever the task is creating or changing a parametric 3D CAD part/assembly for Forgent3D, or when a model.py in the build123d dialect + cadkit is present.
 ---
 
 # Forgent3D CAD authoring
@@ -20,7 +20,8 @@ render, publish, report bugs — goes through one CLI: `cad-build`.
 cad-build rebuild    [file.py]                 # build-check + dimension report
 cad-build run-python [file.py] --code '…'      # measure geometry after the build
 cad-build snapshot   [file.py] [--out p.png]   # render a 2x2 orthographic PNG
-cad-build preview    [file.py]                 # → hosted link; imports into the account
+cad-build export     [file.py] --format step   # step | stl | glb | obj | 3mf
+cad-build preview    [file.py]                 # → shareable read-only 3D link
 cad-build feedback --message '…' [file.py]     # report an engine/tool bug
 ```
 
@@ -29,7 +30,8 @@ cad-build feedback --message '…' [file.py]     # report an engine/tool bug
 | `rebuild` | overall bbox, per-body bboxes, hole census, diagnostics — or the first actionable error | After **every** edit |
 | `run-python` | whatever the snippet `print()`s, run in the model's namespace after it builds | Only when a value can't be derived from the source or the rebuild summary |
 | `snapshot` | path to a PNG with four orthographic views (front / right / top / iso) | Non-trivial work, or whenever you're unsure the shape looks right |
-| `preview` | a hosted 3D link for the user | When the model is done and verified |
+| `export` | path to the written file, next to the source unless `--out` says otherwise | The user wants the model in another tool: STEP for CAD, STL/3MF for a printer, GLB/OBJ for a viewer |
+| `preview` | a shareable 3D link for the user | When the model is done and verified |
 | `feedback` | nothing (fire-and-forget) | A fault in the tool or engine itself |
 
 `cad-build` is this skill's `bin/cad-build` wrapper: it runs the published
@@ -40,8 +42,7 @@ points at one.
 
 The source file may be named anything — `bracket.py`, `part.py`, whatever fits.
 Pass its path, or omit it when the directory holds exactly one `.py` or the file
-is named `model.py`. Whatever the name, `cad-build` builds it as the model, and
-`preview` imports it into the product as that model's `model.py`.
+is named `model.py`. Whatever the name, `cad-build` builds it as the model.
 
 ### run-python is ephemeral
 
@@ -50,12 +51,25 @@ file. Each call costs a round-trip: batch every open question into one snippet,
 and skip it entirely when the `rebuild` summary already answers. Large snippets
 can come from stdin with `--code-stdin`.
 
-### preview is stable across runs
+### preview publishes a read-only link
 
-`preview` writes `.forgent3d-preview.json` in the project dir, holding a stable
-key that ties this project to one cloud model — so re-previewing after edits
-**updates that same model in place** instead of spawning a duplicate. Keep the
-file between previews; it carries no secrets and is safe to commit or gitignore.
+`preview` builds the model here, uploads the source and that geometry, and returns
+a link **anyone can open without signing in** — a 3D view they can rotate and
+measure, not an editable model. To edit it in the cloud, the user signs in on that
+page and remixes it, which copies it into their own account; the copy is theirs and
+this project no longer touches it.
+
+The link is stable across runs: `preview` writes `.forgent3d-preview.json` in the
+project dir, and re-previewing **updates the same link** rather than spawning a new
+one, so a link already sent to someone stays current. That file holds a **secret**
+— it's what authorizes replacing the model behind the link, so gitignore it rather
+than committing it to a public repo. Losing it costs only a new link.
+
+### export is fully local
+
+`export` runs on the same bundled engine, writes the file next to the source, and
+talks to nothing. Use it whenever the user wants the part itself — STEP into their
+CAD tool, STL or 3MF to print, GLB to open in any glTF viewer.
 
 ## The source file — the only editable truth
 
@@ -126,7 +140,8 @@ edit later.
    from the same build as `rebuild`, so run it once the build is clean.
 5. **`cad-build run-python`** only for what steps 3–4 can't answer (a boolean
    seam, a tangency) — `print()` the measurement instead of guessing.
-6. **`cad-build preview`** and hand the user the link.
+6. **`cad-build preview`** and hand the user the link. Add `cad-build export` when
+   they need the geometry itself rather than a link.
 
 ## Reporting engine/tool bugs
 
