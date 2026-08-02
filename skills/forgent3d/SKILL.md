@@ -16,6 +16,11 @@ render, publish, report bugs — goes through one CLI: `cad-build`.
 
 ## Commands
 
+`cad-build` is this skill's `bin/cad-build` wrapper — **not on PATH**, call it
+by path: `<this skill's directory>/bin/cad-build`. It runs the published
+`@forgent3d/cad-build` via npx, or a local build when `FORGENT3D_CAD_BUILD_BIN`
+points at one.
+
 ```
 cad-build rebuild    [file.py]                 # build-check + dimension report
 cad-build run-python [file.py] --code '…'      # measure geometry after the build
@@ -27,16 +32,12 @@ cad-build feedback --message '…' [file.py]     # report an engine/tool bug
 
 | Command | Returns | When |
 | --- | --- | --- |
-| `rebuild` | overall bbox, per-body bboxes, hole census, diagnostics — or the first actionable error | After **every** edit |
+| `rebuild` | overall bbox, volume (mm³), per-body bboxes, cylindrical-face census, diagnostics — or the first actionable error | After **every** edit |
 | `run-python` | whatever the snippet `print()`s, run in the model's namespace after it builds | Only when a value can't be derived from the source or the rebuild summary |
 | `snapshot` | path to a PNG with four orthographic views (front / right / top / iso) | Non-trivial work, or whenever you're unsure the shape looks right |
 | `export` | path to the written file, next to the source unless `--out` says otherwise | The user wants the model in another tool: STEP for CAD, STL/3MF for a printer, GLB/OBJ for a viewer |
 | `preview` | a shareable 3D link for the user | When the model is done and verified |
 | `feedback` | nothing (fire-and-forget) | A fault in the tool or engine itself |
-
-`cad-build` is this skill's `bin/cad-build` wrapper: it runs the published
-`@forgent3d/cad-build` via npx, or a local build when `FORGENT3D_CAD_BUILD_BIN`
-points at one.
 
 ### File argument
 
@@ -64,6 +65,9 @@ project dir, and re-previewing **updates the same link** rather than spawning a 
 one, so a link already sent to someone stays current. That file holds a **secret**
 — it's what authorizes replacing the model behind the link, so gitignore it rather
 than committing it to a public repo. Losing it costs only a new link.
+
+`cad-build` also keeps derived build artifacts in a `.cache/` directory next to
+the source — safe to delete, never edit, gitignore it alongside the preview file.
 
 ### export is fully local
 
@@ -101,7 +105,12 @@ model = Model(bodies=[plate])
 - **Respect geometric legality before you build.** A fillet or corner radius must
   be strictly less than half the shorter side it rounds; a counterbore shallower
   than the wall it enters; a cutter fully through what it cuts. Clamp with
-  `min()` / `max()` rather than hoping a nominal number fits.
+  `min()` / `max()` rather than hoping a nominal number fits; to hard-fail
+  instead, `if not cond: raise ValueError(…)` — the dialect has no `assert`.
+- **Two silent traps** (build fine, bite later): an overshooting cutter can
+  gouge an unrelated thin wall beside its target — the census won't show it, the
+  snapshot will; a sketch extrudes along **its own plane's** normal, so on an
+  offset plane check the rebuild bbox rather than assuming a world axis.
 - **Sketch-first.** Draw the outline with `BuildSketch` on `Plane.XY` / `XZ` /
   `YZ`, subtract holes and slots inside the same sketch, then `extrude` /
   `revolve` / `sweep` / `loft`. This is the default construction and the only one
@@ -111,7 +120,35 @@ model = Model(bodies=[plate])
 - **Prefer cadkit's labelled helpers** — `safe_add`, `safe_cut`, `safe_union`,
   `safe_fillet`, `safe_chamfer(..., label="feature")` — over raw booleans. A
   failing guard means the placement is wrong: fix it. Never shave, shift or
-  delete geometry to silence a check.
+  delete geometry to silence a check. `[cadkit]` notes in the rebuild output
+  are real (a capped radius, a skipped optional round) — read them.
+
+## Working from a drawing
+
+When the request is a dimensioned engineering drawing, the dominant failure mode
+is not building wrong — it's *reading* wrong. Treat interpretation as its own
+verified step:
+
+- **Get the drawing as a file first.** A pasted image can't be zoomed, and
+  hairline extension lines can't be traced at full-sheet scale. Ask for the
+  image file (or save it next to the source file — it also serves the next
+  session) before committing any geometry.
+- **Zoom every ambiguous dimension.** Crop the region (sips, ImageMagick, a
+  3-line PIL script) and read the crop. Which line an extension line touches,
+  stacked-dim datums, which face a depth is cut from, which side of a step is
+  the wide one — decide these from a zoomed crop, never from drafting-convention
+  guesswork alone.
+- **Balance the dimension ledger.** List every dimension on the sheet and the
+  feature that consumes it. A correct reading consumes each exactly once: a
+  leftover dim means a misread feature; a feature you need but can't dimension
+  from the sheet means a wrong interpretation. These drawings are fully defined.
+- **Compare snapshot views against drawing views.** Same projections, side by
+  side — proportion mismatches (a neck too long, a flange too far out) expose
+  path and datum misreads that no bbox number will.
+- **Price the residual ambiguity.** If a reading still can't be pinned, model
+  the most defensible one and report the alternative with its consequence
+  ("if that .25 is from the outer face instead, mass drops to 4.16 lb") so the
+  user can arbitrate at full resolution.
 
 ## Reference docs
 
