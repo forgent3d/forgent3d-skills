@@ -17,7 +17,7 @@ the bundled wasm engine and hand off a hosted 3D preview link.
 
 ```
 cad-build rebuild    [file.py]                 # build-check + dimension report
-cad-build run-python [file.py] --code '…'      # measure geometry after the build
+cad-build check      [file.py] [--test t.py]   # build + run test.py checks (--code '…' for a one-off probe)
 cad-build snapshot   [file.py] [--out p.png]   # render a 2x2 orthographic PNG
 cad-build export     [file.py] --format step   # step | stl | glb | obj | 3mf
 cad-build preview    [file.py]                 # → shareable read-only 3D link

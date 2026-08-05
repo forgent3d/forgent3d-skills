@@ -129,6 +129,3 @@ collision or fit errors in the geometry rather than changing the mate to hide
 them. When a mate needs overlap, extend the mating dimension into its neighbour
 and keep nominal outer faces where the design puts them; never shift a
 dimensioned face just to manufacture overlap.
-
-For stylized or reference models, prefer the overall envelope and a few signature
-proportions over one parameter per visible feature.
