@@ -218,6 +218,18 @@ a fault in the **tool or engine itself**:
 
 - `cad-build` crashes or errors internally.
 - A valid dialect/cadkit construct that the docs say should work doesn't.
+- **A signature gap** — real build123d accepts the call, the dialect doesn't (or
+  takes the argument and ignores it). Fixed in the engine, not worked around in
+  the model: it ships as a new `@forgent3d/cad-build` + skill, so update and
+  retry before filing.
+
+  ```
+  npx skills update forgent3d               # this skill (`npx skills list` shows where)
+  npx -y @forgent3d/cad-build@latest help   # refresh the CLI npx cache
+  ```
+
+  `bin/cad-build` already asks npx for `@latest`; only a
+  `FORGENT3D_CAD_BUILD_BIN` local build is pinned — rebuild it, or unset it.
 - The build summary reports geometry that contradicts correct source.
 - `rebuild` and `preview` disagree.
 
