@@ -1,6 +1,6 @@
 ---
 name: forgent3d
-description: Author or modify a Forgent3D CAD model by editing a build123d-dialect model.py, then build-check it and verify its geometry with test.py checks on the bundled wasm engine (cad-build rebuild / check), export it (cad-build export → STEP/STL/GLB) and hand off a shareable 3D link (cad-build preview). Use whenever the task is creating or changing a parametric 3D CAD part/assembly for Forgent3D, or when a model.py in the build123d dialect + cadkit is present.
+description: Author or modify a Forgent3D CAD model by editing a build123d-dialect model.py, then build-check it on the bundled wasm engine and read back its dimensions (cad-build rebuild), see it in four orthographic views (cad-build snapshot), export it (cad-build export → STEP/STL/GLB) and hand off a shareable 3D link (cad-build preview). Use whenever the task is creating or changing a parametric 3D CAD part/assembly for Forgent3D, or when a model.py in the build123d dialect + cadkit is present.
 ---
 
 # Forgent3D CAD authoring
@@ -23,7 +23,7 @@ points at one.
 
 ```
 cad-build rebuild    [file.py]                 # build-check + dimension report
-cad-build check      [file.py] [--test t.py]   # build + run test.py checks (--code '…' for a one-off probe)
+cad-build check      [file.py] --code '…'      # one-off probe against the built model
 cad-build snapshot   [file.py] [--out p.png]   # render a 2x2 orthographic PNG
 cad-build export     [file.py] --format step   # step | stl | glb | obj | 3mf
 cad-build preview    [file.py]                 # → shareable read-only 3D link
@@ -32,8 +32,8 @@ cad-build feedback --message '…' [file.py]     # report an engine/tool bug
 
 | Command | Returns | When |
 | --- | --- | --- |
-| `rebuild` | overall bbox, volume (mm³), per-body bboxes, cylindrical-face census, diagnostics — or the first actionable error. A clean build auto-runs the sibling `test.py` and appends a `checks (test.py): …` line — a `FAIL` there is a real regression | After **every** edit |
-| `check` | test.py run in the model's namespace after it builds: top-level `print()`s, then each top-level `def test_*` as an isolated check — `checks: N passed[, M failed]` plus a `FAIL` line per failure; any failure exits non-zero | After meaningful edits once `rebuild` is clean. `--code '…'` for a one-off measurement a check file would be overkill for |
+| `rebuild` | overall bbox, volume (mm³), per-body bboxes, cylindrical-face census, diagnostics — or the first actionable error | After **every** edit |
+| `check --code '…'` | runs your snippet in the built model's namespace and prints what it measures — `checks: N passed[, M failed]`, plus a `FAIL` line per failure | A one-off question `rebuild` and `snapshot` can't answer: a boolean seam, a tangency, an unfamiliar API's real signature |
 | `snapshot` | path to a PNG with four orthographic views (front / right / top / iso) | Non-trivial work, or whenever you're unsure the shape looks right |
 | `export` | path to the written file, next to the source unless `--out` says otherwise | The user wants the model in another tool: STEP for CAD, STL/3MF for a printer, GLB/OBJ for a viewer |
 | `preview` | a shareable 3D link for the user | When the model is done and verified |
@@ -45,38 +45,33 @@ The source file may be named anything — `bracket.py`, `part.py`, whatever fits
 Pass its path, or omit it when the directory holds exactly one `.py` or the file
 is named `model.py`. Whatever the name, `cad-build` builds it as the model.
 
-### check: test.py is the model's regression harness
+### check --code: a throwaway probe against the built model
 
-`check` builds the model, then runs `test.py` (next to the source; `--test`
-overrides, and a positional that looks like a check file — `test.py` /
-`test_*.py` / `*.test.py` — is taken as `--test`) as if appended to the model
-source: every top-level name — bodies, intermediate locals, dimension
-constants, `model` — is in scope. Top-level statements run first; then every
-top-level `def test_*` runs in definition order, each isolated: one failure
-reports and the rest still run. `assert` is allowed here and **only** here
-(the model source still rejects it); a bare `assert cond` reports its own
-source text when it fails.
+`check --code '…'` (or `--code-stdin`) builds the model, then runs your snippet
+as if appended to the source: every top-level name — bodies, intermediate
+locals, dimension constants, `model` — is in scope. Top-level statements run
+first; then every top-level `def test_*` runs in definition order, each
+isolated, so one failure reports and the rest still run. `assert` is allowed
+here and **only** here (the model source still rejects it); a bare
+`assert cond` reports its own source text when it fails.
 
-Keep test.py a SMALL set of invariants that must survive later edits, measured
-off the **built** geometry — `bounding_box()`, `volume`, face counts,
-distances between features — and compared against intent. Asserting a model
-constant against itself (`assert w == 40` where `w` came from the model)
-proves nothing. When the design intent changes, update the affected checks in
-the same pass as the model. Deferred `*_feature` results (shell, fillet) are
-applied before checks run, so measure through the Body (`body.geometry`) — an
-intermediate local still holds the pre-feature shape.
+Reach for it when a value decides your next edit and steps 3–4 can't supply it
+— a boolean seam, a tangency, whether a cutter really cleared a wall — or to
+pin down an unfamiliar API with a minimal call before using it in the model.
+`print()` the measurement instead of guessing.
 
-`rebuild` re-runs test.py automatically after every clean build (the
-`checks (test.py): …` line in its report), so once the invariants exist the
-gate costs nothing to keep — just keep the file current.
+Batch every open question into one snippet, and write each independent question
+as its own `def test_*`: the runner isolates them, so one wrong API guess fails
+only that check instead of the whole batch.
 
-`--code '…'` (or `--code-stdin`) runs a one-off snippet the same way instead —
-for a value the source and rebuild summary can't answer, or to pin down an
-unfamiliar API with a minimal probe call before using it in the model. Batch
-every open question into one snippet, and write each independent question as
-its own `def test_*`: the runner isolates them, so one wrong API guess fails
-only that check instead of the whole batch. Snippets are never saved. Durable
-invariants go in test.py; real changes go in the model source.
+Deferred `*_feature` results (shell, fillet) are applied before the snippet
+runs, so measure through the Body (`body.geometry`) — an intermediate local
+still holds the pre-feature shape.
+
+**Snippets are never saved, and that is the point.** Don't write a test file
+into the user's project, and don't leave probe scaffolding behind: the source
+file is the only artifact this skill produces. Real changes go in the model
+source.
 
 ### preview publishes a read-only link
 
@@ -133,7 +128,7 @@ model = Model(bodies=[plate])
   than the wall it enters; a cutter fully through what it cuts. Clamp with
   `min()` / `max()` rather than hoping a nominal number fits; to hard-fail
   instead, `if not cond: raise ValueError(…)` — the model dialect has no
-  `assert` (the `check` test file does).
+  `assert` (a `check --code` snippet does).
 - **Two silent traps** (build fine, bite later): an overshooting cutter can
   gouge an unrelated thin wall beside its target — the census won't show it, the
   snapshot will; a sketch extrudes along **its own plane's** normal, so on an
@@ -202,12 +197,10 @@ edit later.
    the wrong face, a feature mirrored, a fillet that didn't take. The four views
    let you *see* what you built and compare it against what was asked. It reads
    from the same build as `rebuild`, so run it once the build is clean.
-5. **`cad-build check`.** On non-trivial work, write (or refresh) `test.py`
-   invariants — an edit that silently broke something distant gets caught by
-   the gate, not by the user (`rebuild` re-runs the file automatically from
-   then on). Use `--code` for one-off questions steps 3–4 can't answer (a
-   boolean seam, a tangency) — `print()`/`assert` the measurement instead of
-   guessing.
+5. **`cad-build check --code '…'`** when a value decides your next edit and
+   steps 3–4 can't supply it (a boolean seam, a tangency, an API you haven't
+   used before) — `print()` the measurement instead of guessing. Skip it
+   otherwise; it leaves nothing behind either way.
 6. **`cad-build preview`** and hand the user the link. Add `cad-build export` when
    they need the geometry itself rather than a link.
 
