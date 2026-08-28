@@ -2,9 +2,12 @@
 
 Read this before adding or editing any `#@` comment.
 
-A `#@` directive labels an operation in the readable outline and exposes selected
-call arguments as editable UI fields. It is **source-persisted UI metadata, not a
-second source of values**.
+The marker has two hosts. On an **operation line** a `#@` directive labels that
+operation in the readable outline and exposes selected call arguments as editable
+UI fields. On a **constant definition line** it publishes that constant as a knob
+of the model's generator panel (see [Knobs](#knobs-on-a-constant-definition-line)
+below). Either way it is **source-persisted UI metadata, not a second source of
+values**.
 
 ## Syntax
 
@@ -54,3 +57,53 @@ constant, not a derived half-value:
 for x, y in mount_positions:
     cover = safe_cut(cover, Cylinder(THROUGH_D / 2.0, depth), label="mount bore")  #@ Mount bores x6 radius=THROUGH_D
 ~~~
+
+## Knobs (`#@` on a constant definition line)
+
+The **same** marker on a module-level constant definition declares a public
+knob — one field of this model's generator panel. The host decides what the keys
+mean: on an operation line the pairs are `<param>=<constant>` bindings, on a
+constant line they are the four reserved keys `range` / `step` / `choices` /
+`group`. A helper parameter named `step` keeps reading as a binding.
+
+The control is the `#@` comment on the constant's **own definition line, and
+nothing else**. Never write a metadata dict, a schema, a `PUBLIC_PARAMS` table or
+a `design_param` wrapper to describe one: that is a second source of truth and it
+goes stale the first time someone edits the value.
+
+~~~python
+WALL  = 2.0     #@ Wall thickness (mm) range=1.2..4 step=0.2
+COLS  = 3       #@ Columns range=1..8 step=1 group=size
+LID   = True    #@ With lid
+CELL_SIZES = {"small": 30.0, "medium": 40.0, "large": 55.0}
+CELL  = "medium"                          #@ Cell size
+pitch = CELL_SIZES[CELL]
+CLEAR = 0.2     # no #@ — internal, not published
+~~~
+
+- The label is the text before the first `key=value`; a trailing `(mm)` is its
+  unit. The four keys are `range=<min>..<max>`, `step=`, `choices=a,b,c` and
+  `group=`. There is **no `type=`**: a number literal is a slider, `True`/`False`
+  a switch, a string a dropdown or a text box. The type is a fact already written
+  in the code; declaring it twice is a second source that rots.
+- The constant must be a plain **literal** at its definition. `WALL = STOCK - 2 *
+  CLEAR` cannot be a control — hoist the literal first. A `#@` on anything else is
+  dropped, never wrapped in `design_param`.
+- A dropdown's options come from the lookup **table** the constant indexes
+  (`CELL_SIZES[CELL]` above), so there is nothing to keep in sync; `choices=` is
+  only for a string with no such table. The option value **is** its display
+  name — there is no label mapping, so write values a person can read. An
+  `if`/`elif` chain is not read.
+- Publish the few controls the request names, not every constant. Everything else
+  stays a plain `#` comment and is still visible in the outline.
+- Order is source order, and `group=` folds related controls under one heading.
+- `range=` is a claim you have to have tested: **build both ends before you write
+  it.** An untested range ships green and breaks on the first visitor who drags
+  the slider — nothing else in the pipeline ever exercises a value other than the
+  default.
+- Prefer a slider to a dropdown. A number can be sampled; every dropdown option is
+  a geometry branch, and options **multiply** — three dropdowns of four options
+  each is 64 combinations to stand behind.
+- Engraved text (a string knob feeding `Text()`) is limited to the bundled font:
+  printable ASCII plus a few symbols, **no CJK**. Do not offer a text knob for
+  lettering that has to be Chinese.

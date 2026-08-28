@@ -182,7 +182,7 @@ edit later.
 | --- | --- |
 | [references/selectors.md](references/selectors.md) | Writing any persistent geometry reference — `selector.…` queries, `Body(features={…})`, mate sides |
 | [references/assembly.md](references/assembly.md) | Poses, mates, joints, connectors, `Reference`/`MeshRef`, persistent appearance overrides, the `# <forgent3d:assembly>` managed block |
-| [references/outline.md](references/outline.md) | Adding or editing a `#@` annotation |
+| [references/outline.md](references/outline.md) | Adding or editing a `#@` annotation — outline labels, and knobs on a constant line (the generator panel) |
 
 ## Workflow
 
