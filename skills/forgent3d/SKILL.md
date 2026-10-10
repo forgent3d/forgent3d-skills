@@ -1,6 +1,6 @@
 ---
 name: forgent3d
-description: Author or modify a Forgent3D CAD model by editing a build123d-dialect model.py, then build-check it on the bundled wasm engine and read back its dimensions (cad-build rebuild), measure it (cad-build check), see it in orthographic views (cad-build snapshot), export it (cad-build export → STEP/STL/GLB) and hand off a shareable 3D link (cad-build preview). Use whenever the task is creating or changing a parametric 3D CAD part/assembly for Forgent3D, or when a model.py in the build123d dialect + cadkit is present.
+description: Author or modify a Forgent3D CAD model by editing a build123d-dialect model.py, then build-check it on the bundled wasm engine and read back its dimensions (cad-build rebuild), measure it (cad-build check), see it in orthographic views (cad-build snapshot), export it (cad-build export → STEP/STL/GLB) and hand off a shareable 3D link (cad-build preview). A STEP/BREP the user supplies is imported as real geometry (import_cad), an STL is shown and read (MeshRef, mesh_section) to build around it. Use whenever the task is creating or changing a parametric 3D CAD part/assembly for Forgent3D, or when a model.py in the build123d dialect + cadkit is present.
 ---
 
 # Forgent3D CAD authoring
@@ -254,6 +254,33 @@ model = Model(bodies=[plate])
   never a shared nominal. `body-interference` is the only check that looks
   across bodies, and it only sees the pose the source writes — a part that must
   **move** needs the `motion` recipe.
+
+## Files the user hands you
+
+A STEP, BREP or STL the user gives you is a **build input**, not something to
+redraw: copy it to `imports/<name>.<ext>` beside the source file (a plain name,
+one level deep), reference it by that relative path, and never edit or
+regenerate what is in `imports/`. Then:
+
+- **STEP / BREP** — `cadkit.import_cad("imports/<file>")` returns real solid
+  geometry: select its faces, `safe_fillet` / `safe_chamfer` its edges, cut, fuse,
+  mate and measure it like a part you built; the rebuild censuses read its
+  bores and faces too. A multi-solid file comes back as a Compound — assign it to
+  one Body as it is, or split it with `.solids()` and name the pieces. A big STEP
+  is parsed on every build (a 7 MB board takes about ten seconds).
+- **STL** — a triangle mesh: it takes no booleans, and the censuses and `measure`
+  do not see it. `MeshRef(file="imports/<file>", transform=Transform(pos=…))`
+  under `Assembly(mesh_refs={…})` in the managed block shows it (`pos` is where
+  its bounding-box centre lands); the report lists it under `mesh refs`. To build
+  AROUND it, read it: `cadkit.mesh_bounds(path)` gives `(lo, hi)`, and
+  `cadkit.mesh_section(path, z=None, tol=0.05)` gives the closed outline Wire(s)
+  of the cut at z (default mid-height), largest first —
+  `offset(make_face(outline), amount=clearance)` is the exact perimeter a tray,
+  lid, pocket or holder must follow. When the user has both a photo and the
+  file, the file wins: a section is exact, a trace is not.
+- `preview` uploads the `imports/` files model.py names along with the geometry,
+  so the link shows the mesh and a remix can rebuild. `export` writes the B-rep
+  only: an imported STEP is in it, a mesh ref is shown, not merged.
 
 ## When the request leaves a decision open
 

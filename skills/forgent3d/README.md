@@ -26,6 +26,8 @@ cad-build preview    [file.py]                             # → shareable 3D li
 cad-build feedback --message '…' [file.py]                 # report an engine/tool bug
 ```
 
+SKILL.md's "Files the user hands you" (import_cad, mesh_bounds, mesh_section, the
+imports/ upload in preview) needs `@forgent3d/cad-build` 0.4.0 or later.
 SKILL.md uses commands and flags of the current `@forgent3d/cad-build`; the
 launcher always asks npx for `@latest`, so a new CLI must be **published before**
 skill text that relies on it is pushed.
