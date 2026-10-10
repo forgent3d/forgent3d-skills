@@ -1,0 +1,67 @@
+#!/usr/bin/env node
+// openscad skill → @forgent3d/cad-build launcher (the same CLI the forgent3d skill drives).
+//
+// Resolution order:
+//   1. $FORGENT3D_CAD_BUILD_BIN            explicit path to a local cad-build bin
+//      (e.g. <monorepo>/packages/cad-build-cli/bin/cad-build.mjs) — use this
+//      until the npm package is published.
+//   2. npx -y @forgent3d/cad-build@latest  the published package.
+import { spawn } from "node:child_process";
+import { dirname, join } from "node:path";
+import { existsSync } from "node:fs";
+
+const argv = process.argv.slice(2);
+const local = process.env.FORGENT3D_CAD_BUILD_BIN;
+
+const opts = { stdio: "inherit", env: process.env };
+let cmd, args;
+if (local) {
+  cmd = process.execPath;
+  args = [local, ...argv];
+} else {
+  const passthru = ["-y", "@forgent3d/cad-build@latest", ...argv];
+  // Prefer running npm's npx-cli.js with the current node. On Windows the PATH
+  // entry is `npx.cmd` (bare `spawn("npx")` → ENOENT), and spawning a .cmd
+  // needs shell:true post-CVE-2024-27980 — which would force us to escape argv.
+  // Running the .js directly sidesteps both, with no shell and no escaping.
+  // node.exe ships npm alongside it (Windows: <dir>/node_modules; Unix nvm:
+  // <dir>/../lib/node_modules).
+  const nodeDir = dirname(process.execPath);
+  const npxCli = [
+    join(nodeDir, "node_modules", "npm", "bin", "npx-cli.js"),
+    join(nodeDir, "..", "lib", "node_modules", "npm", "bin", "npx-cli.js"),
+  ].find(existsSync);
+  if (npxCli) {
+    cmd = process.execPath;
+    args = [npxCli, ...passthru];
+  } else if (process.platform === "win32") {
+    cmd = "npx.cmd";
+    args = passthru;
+    opts.shell = true;
+  } else {
+    cmd = "npx";
+    args = passthru;
+  }
+}
+
+const child = spawn(cmd, args, opts);
+// Exit by SETTING the code, not by calling process.exit() from inside the
+// child's exit callback. On Windows the child reaper delivers that callback
+// through libuv's async handle, so exiting in place tears the loop down while
+// the handle is still closing:
+//   Assertion failed: !(handle->flags & UV_HANDLE_CLOSING), src\win\async.c:76
+// — a crash on a run that already succeeded. "close" also guarantees the
+// child's stdio is fully flushed first; a hard exit only backstops from an
+// unref'd timer, i.e. once the loop is quiet and nothing is mid-close.
+child.on("close", (code, signal) => {
+  if (signal) {
+    process.kill(process.pid, signal);
+    return;
+  }
+  process.exitCode = code ?? 0;
+  setTimeout(() => process.exit(code ?? 0), 2000).unref();
+});
+child.on("error", (err) => {
+  process.stderr.write(`cad-build launcher failed: ${err.message}\n`);
+  process.exitCode = 1;
+});
