@@ -6,13 +6,12 @@ Cline, Copilot, Windsurf, …) how to work with Forgent3D.
 
 ## Skills
 
-- **[forgent3d](skills/forgent3d/)** — author / modify a Forgent3D CAD
-  model.py: edit the build123d dialect, build-check + measure it with the bundled
-  wasm engine, and hand off a hosted 3D preview link.
-- **[openscad](skills/openscad/)** — author / modify an OpenSCAD `.scad` with
-  nothing installed: the bundled OpenSCAD renders it, the agent reads bbox /
-  volume / `echo()` back, looks at it, walks the Customizer parameters, exports
-  STL/3MF and hands off a link that carries the code (and converts it to STEP).
+- **[forgent3d](skills/forgent3d/)** — author / modify a 3D CAD part with Forgent3D.
+  One skill, two routes it picks from the request: a build123d-dialect `model.py`
+  (built and measured on the bundled wasm engine, exported to STEP, hosted as an
+  editable 3D link) or an OpenSCAD `.scad` (rendered by the bundled OpenSCAD, read
+  back, exported to STL/3MF, handed off as a link that carries the code and
+  converts it to STEP). Nothing to install either way.
 
 ## Install
 
@@ -34,8 +33,8 @@ npx skills list              # what's installed, and where
 npx skills update forgent3d
 ```
 
-Or point any agent at `skills/<name>/SKILL.md` and run its tools with
-`node skills/<name>/bin/cad-build <cmd>`. Both skills shell out to the same CLI.
+Or point any agent at `skills/forgent3d/SKILL.md` and run its tools with
+`node skills/forgent3d/bin/cad-build <cmd>`.
 
 > These skills are maintained here, by hand. The only thing they depend on from
 > Forgent3D is the `@forgent3d/cad-build` CLI they shell out to.

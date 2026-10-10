@@ -1,36 +1,44 @@
 # forgent3d — coding-agent skill
 
-Lets a coding agent (Claude Code / Codex / …) author and modify a **Forgent3D**
-CAD model: edit a build123d-dialect `model.py`, then build-check / measure / look
-at it with the bundled wasm engine and hand off a shareable 3D link.
+Lets a coding agent (Claude Code / Codex / …) author and modify a 3D CAD part with
+**Forgent3D**, by one of two routes it picks from the request and the files present:
 
-- **SKILL.md** — the instructions the agent follows. Maintained here; edit it
-  directly.
-- **references/** — deeper rules the agent reads on demand: `selectors.md`
-  (persistent geometry queries), `assembly.md` (mates, joints, the managed
-  block), `outline.md` (`#@` annotations and published knobs).
+- **build123d route** — edit a build123d-dialect `model.py`, build-check / measure /
+  look at it with the bundled wasm engine, export STEP and hand off a hosted 3D link
+  (what the product's workspace keeps editing).
+- **OpenSCAD route** — edit a `.scad`; the bundled OpenSCAD renders it, the agent reads
+  bbox / volume / `echo()` back, walks the Customizer parameters, exports STL/3MF and
+  hands off a link that carries the code (that page converts it to STEP).
+
+- **SKILL.md** — what every run reads: the routing rule, the shared command table, the
+  shared rules (open decisions, workflow, bug reports). Kept short on purpose.
+- **references/build123d.md** / **references/openscad.md** — one of these is read per task,
+  as SKILL.md directs: everything specific to that route.
+- **references/selectors.md**, **assembly.md**, **outline.md** — deeper build123d rules the
+  agent reads on demand (persistent geometry queries; mates, joints, the managed block;
+  `#@` annotations and published knobs).
 - **bin/cad-build** — launcher for [`@forgent3d/cad-build`](https://www.npmjs.com/package/@forgent3d/cad-build):
-  runs the published package via `npx …@latest`, or a **local build** when
-  `FORGENT3D_CAD_BUILD_BIN` points at one.
+  runs the published package via `npx …@latest` (the kernel and OpenSCAD ship inside
+  it), or a **local build** when `FORGENT3D_CAD_BUILD_BIN` points at one.
 
 ## Commands
 
 ```
-cad-build rebuild    [file.py]                             # build-check + dimension report
-cad-build check      [file.py] --code '…'                  # one-off probe against the built model
-cad-build snapshot   [file.py] [--view front] [--line-art] [--xray]   # orthographic PNG
-cad-build knobs      [file.py]                             # build every #@ knob at its extremes
-cad-build recipe     <motion|pocket|outline>               # focused reference
-cad-build export     [file.py] --format step               # step | stl | glb | obj | 3mf
-cad-build preview    [file.py]                             # → shareable 3D link
-cad-build feedback --message '…' [file.py]                 # report an engine/tool bug
+cad-build rebuild    <file.py | file.scad>                           # build or render, then report
+cad-build check      <file.py> --code '…'                            # probe the built model — build123d route only
+cad-build snapshot   <file> [--view front] [--line-art] [--xray]     # orthographic PNG
+cad-build knobs      <file>                                          # every published control built at its extremes
+cad-build export     <file> --format step|stl|3mf|glb|obj            # step: build123d route only
+cad-build preview    <file>                                          # → shareable link
+cad-build recipe     <motion|pocket|outline>                         # build123d route references
+cad-build feedback --message '…' <file>                              # report an engine/tool bug
 ```
 
-SKILL.md's "Files the user hands you" (import_cad, mesh_bounds, mesh_section, the
-imports/ upload in preview) needs `@forgent3d/cad-build` 0.4.0 or later.
-SKILL.md uses commands and flags of the current `@forgent3d/cad-build`; the
-launcher always asks npx for `@latest`, so a new CLI must be **published before**
-skill text that relies on it is pushed.
+The OpenSCAD route, the `imports/` handling on the build123d route (`import_cad`,
+`mesh_bounds`, `mesh_section`, the imports upload in `preview`) and `.scad` input in
+general need `@forgent3d/cad-build` **0.4.0 or later**. SKILL.md uses commands and flags
+of the current CLI; the launcher always asks npx for `@latest`, so a new CLI must be
+**published before** skill text that relies on it is pushed.
 
 ## Local build (an engine not yet on npm)
 
