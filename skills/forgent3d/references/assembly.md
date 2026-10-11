@@ -147,8 +147,10 @@ degrees. `drive` is the played preview motion: `"spin"` turns continuously,
 `"sweep"` oscillates through `range`, `"hold"` keeps a pose with no motion of its
 own. `speed` is deg/s (default 40).
 
-`Slider(travel=(min,max), axis=, pos=)` uses millimetres and declares travel
-freedom without a drive.
+`Slider(travel=(min,max), axis=, pos=, drive="sweep", speed=)` uses millimetres;
+`drive="sweep"` slides it back and forth across `travel` in the preview at
+`speed` mm/s (default 20). Without a drive it declares travel freedom only and
+the preview shows it at rest.
 
 Axis/position are move-body local. Axial mates can derive them; otherwise declare
 them. A derived hinge axis is the bore's direction, and `range=(0, 180)` is
