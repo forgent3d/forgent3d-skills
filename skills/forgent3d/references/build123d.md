@@ -76,6 +76,14 @@ reader takes the model, one body, or a raw Part:
   it), so a check agrees with `body-interference`; a Body or Part passed on its
   own is read in its own frame. `measure.posed(model, "lid")` is one body in its
   solved pose, for reading it against a part or measuring a posed face.
+- `measure.escape(lid, box, pull=(0, 0, 6), slack={"Y": (-0.8, 0.8)})` — does a
+  latched part come free? Pulls `lid` off `box` along `pull` after letting it
+  wander anywhere inside `slack` (its free play, mm per axis — a helper's
+  `spec.play` / `spec.lateral_slop`). Prints FREE with the offset that escapes, or
+  HELD. A snap or detent interferes when pulled straight, so a sweep along its
+  one joint cannot tell a latch that holds from one that holds nothing; the
+  failure is in the slack. Material thinner than 0.4 mm along the pull counts
+  as slivers, not as holding.
 - `print(measure.report(model))` — every plane, bore, wall, edge and interference
   the solid actually has, to read against the request line by line.
 
