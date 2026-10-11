@@ -57,12 +57,16 @@ reader takes the model, one body, or a raw Part:
 - `measure.edges(model, kind=, radius=, axis=)` / `measure.edges_at(model, "X",
   69, radius=16.5)` — **which edge**: name an edge by radius and position before
   rounding it, never by an index into `.edges()`.
-- `measure.cylinders` raises ("could not read any of the N cylindrical face(s)")
-  when NONE of a solid's cylinders is readable — teardrop-roofed hinge bores,
-  helix-split faces — before `include_partial` applies; on a solid with at
-  least one readable cylinder the unreadable ones are dropped without a word.
-  Prove such a feature by intersection (`measure.posed(...).intersect(probe)`)
-  or from the helper's `spec` radii instead.
+- `measure.cylinders` reads trimmed and merged cylinders too (a hinge's
+  teardrop-roofed bore, a helix-split tube) — as partial faces, listed with
+  `include_partial=True`. It raises only when NONE of a solid's cylindrical
+  faces could be read; faces it had to skip on an otherwise readable solid are
+  counted in a `[measure] note:` line in the output, never dropped silently.
+- `measure.walls` pairs two opposed faces only where their footprints overlap:
+  a groove in a tube reads the wall behind it (1.2) and the full wall beside it
+  (2.0), never the groove's own depth; two windows facing each other across a
+  box are not a wall. It cannot tell a boss standing inside a bore of the same
+  body from a tube (coaxial, nested faces) — that reads as a tube.
 - `measure.walls(model)` — every material thickness it can prove (two opposed
   faces). Where a wall **wraps** a feature, check the derived surface exists
   instead (an R15 clearance in a 6 mm wall leaves an R21 face).
