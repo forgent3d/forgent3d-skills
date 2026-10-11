@@ -130,12 +130,12 @@ before binding them from the managed block, as in the example above.
   instead. The rebuild's `connections` line prints the solved frame; the `@`
   point is the ref side's anchor.
 - Connector geometry (`Pin`/`Peg`/`Dovetail`/`SnapPin`/`Ball` generated across a
-  mate) exists only in the rebuild and the viewer: `check` measures the bodies
-  WITHOUT it, so a connector's fit cannot be swept or measured there — use the
-  source-side helper (`pin_and_bore`, `dovetail_pair`, …) when you need to
-  verify the joint, and the connector when you only need it to exist. The
-  `Dovetail` connector makes a rail and a groove of the same `length`, closed at
-  both ends, centred on the mate point along the Slider's axis.
+  mate) is applied in `check` too: the two bodies' `.geometry` carry it (a
+  `[cad-engine] note:` names them), so a connector's fit can be measured and
+  swept like source-side geometry. The `Dovetail` connector makes a rail and a
+  groove of the same `length`, closed at both ends, centred on the mate point
+  along the Slider's axis — a Slider travel longer than that length cannot
+  happen; use `dovetail_pair` in the source for an open-ended slide.
 - `spin` defaults to the authored spin. A `thread_pair` cap mated `circular`
   onto its neck stays meshed because of that; `spin=90` unmeshes it (there is no
   helical joint).
