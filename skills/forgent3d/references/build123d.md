@@ -57,11 +57,21 @@ reader takes the model, one body, or a raw Part:
 - `measure.edges(model, kind=, radius=, axis=)` / `measure.edges_at(model, "X",
   69, radius=16.5)` — **which edge**: name an edge by radius and position before
   rounding it, never by an index into `.edges()`.
+- `measure.cylinders` raises ("could not read any of the N cylindrical face(s)")
+  when NONE of a solid's cylinders is readable — teardrop-roofed hinge bores,
+  helix-split faces — before `include_partial` applies; on a solid with at
+  least one readable cylinder the unreadable ones are dropped without a word.
+  Prove such a feature by intersection (`measure.posed(...).intersect(probe)`)
+  or from the helper's `spec` radii instead.
 - `measure.walls(model)` — every material thickness it can prove (two opposed
   faces). Where a wall **wraps** a feature, check the derived surface exists
   instead (an R15 clearance in a 6 mm wall leaves an R21 face).
 - `measure.slopes(model)` — ramp angles. `measure.interference(model)` — bodies
-  sharing space (or pass two parts: a posed body and its neighbour).
+  sharing space. Every model-level reader measures each body in its **solved
+  pose** (the managed block's mates applied, exactly where the rebuild placed
+  it), so a check agrees with `body-interference`; a Body or Part passed on its
+  own is read in its own frame. `measure.posed(model, "lid")` is one body in its
+  solved pose, for reading it against a part or measuring a posed face.
 - `print(measure.report(model))` — every plane, bore, wall, edge and interference
   the solid actually has, to read against the request line by line.
 

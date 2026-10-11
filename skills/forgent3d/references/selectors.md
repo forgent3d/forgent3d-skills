@@ -8,9 +8,9 @@ body-locally at build time.
 - Start with `selector.faces()`, `selector.edges()`, or `selector.feature("name")`.
 - Inside `Body(features={...})`, keep the query unbound: `selector.faces()…`.
 - In the managed assembly block, bind it to a Body with `selector.on("body")…`.
-- Filter with `Q.normal("+z")`, `Q.axis("z")`, `Q.surface("cylinder")`,
+- Filter with `.where(Q.…)` — `Q.normal("+z")`, `Q.axis("z")`, `Q.surface("cylinder")`,
   `Q.curve("circle")`, `Q.radius(3)`, `Q.area(min=)`, `Q.length(max=)`,
-  `Q.center("z", 16)`, `Q.distance((x,y,z), max=)`, `Q.internal()`,
+  `Q.center("z", 16)` (±0.001 mm unless `tolerance=` is given), `Q.distance((x,y,z), max=)`, `Q.internal()`,
   `Q.external()`, or `Q.all` / `Q.any` / `Q.not_`.
 - Rank with `.extreme(By.center("+z"), "max")`, `.order_by(By.area().desc())`, or
   `.nearest((x,y,z))`. Ranking only orders or narrows candidates; it does not

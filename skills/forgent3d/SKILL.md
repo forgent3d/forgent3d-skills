@@ -74,7 +74,7 @@ cad-build feedback --message '…' <file>                              # report 
 
 | Command | build123d route (`model.py`) | OpenSCAD route (`.scad`) |
 | --- | --- | --- |
-| `rebuild` | bbox, volume, the cylinder census (each radius **and where its axis runs**), the planar faces (**which coordinate every flat face sits at**), disjoint solids, diagnostics | bbox, volume (the facets'), triangle count, the file's `echo()` lines, OpenSCAD's warnings |
+| `rebuild` | bbox, volume, the cylinder census (each radius **and where its axis runs**), the planar faces (**which coordinate every flat face sits at**), disjoint solids, the solved connections (each mate's kind, outcome, solved frame and derived joint), diagnostics | bbox, volume (the facets'), triangle count, the file's `echo()` lines, OpenSCAD's warnings |
 | `check --code` | what your snippet prints against the built model; `def test_*` checks | refused — `echo()` in the file is the probe |
 | `snapshot` | the 2×2 sheet (top / iso / front / right) or one `--view`; `--line-art --xray` dashes hidden edges | the same, drawn from OpenSCAD's triangles; `color()` shows |
 | `knobs` | every `#@` knob on a constant line, at its extremes: `OK` / `INERT` / `WARNS` / `BROKEN` | every Customizer parameter, re-rendered at its extremes: the same verdicts |
