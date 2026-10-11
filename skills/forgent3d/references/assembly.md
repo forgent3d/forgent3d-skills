@@ -75,7 +75,7 @@ never edit mounted `refs/` files or copy their geometry into the local model.
 Treat geometry and assembly intent as two coordinated layers:
 
 1. The source file creates the real mating geometry. Cadkit helpers
-   `pin_and_bore`, `peg_socket`, `dovetail_pair`, `snap_pin` and
+   `pin_and_bore`, `dovetail_pair`, `snap_pin` and
    `ball_and_socket` are geometry generators.
 2. The managed assembly block declares the semantic relationship with `mate(...)`,
    its `Hinge`/`Slider` motion, and any `Pin`/`Peg`/`Dovetail`/`SnapPin`/`Ball`
@@ -175,7 +175,7 @@ consume exactly one entity. Never copy face indices or fingerprints.
 | --- | --- | --- |
 | Rotation | `pin_and_bore` | cylindrical/circular mate + `Hinge` |
 | Linear motion | `dovetail_pair` in the source, **or** the `Dovetail` connector (never both: the connector generates its own rail and groove) | mate + `Slider(axis=...)` — the connector's rail runs along the Slider's axis; without one its direction is the interface plane's default |
-| Static location | `peg_socket` | mate without a motion joint, when persistence is useful |
+| Static location | `pin_and_bore(..., fit="snug", through=None)` (blind locating socket) | mate without a motion joint, when persistence is useful |
 | Printed retention | `snap_pin` | — |
 | Posable joint | `ball_and_socket` | `Ball` connector, when generated across a mate |
 | Screw cap / threaded joint | `thread_pair` | `circular` mate, `spin` at its default (keeps the helix meshed) |
