@@ -284,7 +284,11 @@ verified step:
   feature count, same proportions. A part built off a misread datum passes every
   measurement you write, because those came from your own reading; it only looks
   wrong next to the sheet. A mismatch is a lead to re-read that callout, never
-  something to nudge the model until the picture agrees.
+  something to nudge the model until the picture agrees. To settle ONE feature —
+  did that hole, pocket or fillet land where its statement meant — `snapshot
+  --line N` zooms onto the faces model.py line N built, tinted orange with their
+  hidden edges dashed through the part, ALONG the feature and ACROSS it; the text
+  names the faces, their box in mm and whether each view sees them or not.
 - **Price the residual ambiguity.** If a reading still can't be pinned, model
   the most defensible one and report the alternative with its consequence
   ("if that .25 is from the outer face instead, mass drops to 4.16 lb") so the

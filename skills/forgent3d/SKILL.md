@@ -64,7 +64,7 @@ to install), or a local build when `FORGENT3D_CAD_BUILD_BIN` points at one.
 ```
 cad-build rebuild    <file.py | file.scad>                           # build or render, then report
 cad-build check      <file.py> --code '…'                            # probe the built model — build123d route only
-cad-build snapshot   <file> [--view front] [--line-art] [--xray]     # orthographic PNG
+cad-build snapshot   <file> [--view front] [--line N] [--line-art] [--xray]  # orthographic PNG; --line N zooms onto one statement's faces
 cad-build knobs      <file>                                          # every published control built at its extremes
 cad-build export     <file> --format step|stl|3mf|glb|obj            # step: build123d route only
 cad-build preview    <file>                                          # → shareable link
@@ -76,7 +76,7 @@ cad-build feedback --message '…' <file>                              # report 
 | --- | --- | --- |
 | `rebuild` | bbox, volume, the cylinder census (each radius **and where its axis runs**), the planar faces (**which coordinate every flat face sits at**), disjoint solids, the solved connections (each mate's kind, outcome, solved frame and derived joint), diagnostics | bbox, volume (the facets'), triangle count, the file's `echo()` lines, OpenSCAD's warnings |
 | `check --code` | what your snippet prints against the built model; `def test_*` checks | refused — `echo()` in the file is the probe |
-| `snapshot` | the 2×2 sheet (top / iso / front / right) or one `--view`; `--line-art --xray` dashes hidden edges | the same, drawn from OpenSCAD's triangles; `color()` shows |
+| `snapshot` | the 2×2 sheet (top / iso / front / right) or one `--view`; `--line-art --xray` dashes hidden edges; `--line N` zooms onto the faces model.py line N built (orange, their hidden edges dashed through, ALONG + ACROSS the feature) and names them in the text | the same, drawn from OpenSCAD's triangles; `color()` shows; no `--line` |
 | `knobs` | every `#@` knob on a constant line, at its extremes: `OK` / `INERT` / `WARNS` / `BROKEN` | every Customizer parameter, re-rendered at its extremes: the same verdicts |
 | `export` | STEP (exact), STL / 3MF / GLB / OBJ, written locally | STL / 3MF / GLB / OBJ from OpenSCAD's own triangles; STEP is the preview page's |
 | `preview` | uploads model.py, the geometry built here, its colours and any `imports/` files: a link with a 3D view and a browser editor | a link that carries the code itself: real OpenSCAD renders it there, parameters live, STEP and STL export |
