@@ -22,6 +22,19 @@ cut severed a boss). Every `warning` in `diagnostics` is real:
   not appear.
 - `unused-variable`, `seam-embedded`, `pocket-*` and the rest say what they mean —
   read them; a dimension that never reaches the geometry is usually a typo.
+- `spec-unbuilt` — a `# stated:` constant (a number the request gave) that nothing
+  reads: that requirement is not built. Wire it into the feature it sizes.
+
+The `spec` block holds every `# stated:` constant against the two face censuses,
+through the value traces (which call each constant reached, and what the
+argument came out as): a radius fed to `Cylinder` / `Circle` / `Hole` is looked
+up in the cylinder census, a side or `extrude` amount fed to `Box` / `Rectangle` /
+`extrude` is looked up as a pair of planar faces that far apart. Each line is a
+fact: `found r4.5 Z ×2 @ x0 y0`, `NOT in the cylinder census`, `reaches no
+geometry call — not built`, or `used by Pos@L14 (not a census dimension)`. A
+stated value the solid does not show is a lead to **measure** (`check --code`
+with `measure.cylinders` / `measure.span`), never to explain away: a later boolean
+may have consumed it, or the cutter may have missed the part.
 
 ## check --code: a throwaway probe against the built model
 
